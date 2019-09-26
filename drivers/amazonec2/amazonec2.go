@@ -947,6 +947,9 @@ func (d *Driver) getInstance() (*ec2.Instance, error) {
 	if err != nil {
 		return nil, err
 	}
+	if instances == nil || len(instances.Reservations) < 1 || len(instances.Reservations[0].Instances) < 1 {
+		return fmt.Errorf("Error getting instance: %v", errors.New("Unexpected AWS API response"))
+	}
 	return instances.Reservations[0].Instances[0], nil
 }
 
