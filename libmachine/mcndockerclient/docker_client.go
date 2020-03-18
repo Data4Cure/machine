@@ -2,6 +2,8 @@ package mcndockerclient
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/docker/machine/libmachine/cert"
 	"github.com/samalba/dockerclient"
@@ -22,6 +24,15 @@ func DockerClient(dockerHost DockerHost) (*dockerclient.DockerClient, error) {
 	return dockerclient.NewDockerClient(url, tlsConfig)
 }
 
+func contains(arr []string, str string) bool {
+	for _, a := range arr {
+		if a == str {
+			return true
+		}
+	}
+	return false
+}
+
 // CreateContainer creates a docker container.
 func CreateContainer(dockerHost DockerHost, config *dockerclient.ContainerConfig, name string) error {
 	docker, err := DockerClient(dockerHost)
@@ -29,10 +40,11 @@ func CreateContainer(dockerHost DockerHost, config *dockerclient.ContainerConfig
 		return err
 	}
 
-	if err = docker.PullImage(config.Image, nil); err != nil {
-		return fmt.Errorf("Unable to pull image: %s", err)
-	}
-
+        if !contains(strings.Split(os.Getenv("MACHINE_DONT_PULL"), ","), name) {
+		if err = docker.PullImage(config.Image, nil); err != nil {
+			return fmt.Errorf("Unable to pull image: %s", err)
+		}
+        }
 	var authConfig *dockerclient.AuthConfig
 	containerID, err := docker.CreateContainer(config, name, authConfig)
 	if err != nil {
